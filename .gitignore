@@ -1,0 +1,4 @@
+*.gpkg
+*.csv
+City_Boundaries/
+zipcodes/
