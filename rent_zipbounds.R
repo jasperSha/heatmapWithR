@@ -27,6 +27,7 @@ names(rent_index)[2] <- "rental_average"
 setwd("~/Documents/HousingMap/R_data/")
 zipbounds <- readOGR('ZIPCODES.geojson', stringsAsFactors = FALSE)
 
+
 #mutate zipbounds zipcode to integer for left_join
 zipbounds@data[4] <- lapply(zipbounds@data[4], as.integer)
 
