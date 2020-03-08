@@ -90,15 +90,12 @@ library(leaflet)
 library(leaflet.extras)
 crime_map_2011 <- leaflet(x) %>%
   addProviderTiles(providers$CartoDB.DarkMatter)%>%
-  addWebGLHeatmap(size=100, group="Most Heinous Crimes of 2011")
-
-leaflet(worst_crime_2011) %>%
-  addWebGLHeatmap(map=base_map,size=500, group="Most Heinous Crimes of 2011")
-
-#fitbounds(lng1, lat1, lng2, lat2)
-crime_map_2011 %>% fitBounds(~min(worst_crime_2011$lon), ~min(worst_crime_2011$lat), ~max(worst_crime_2011$lon), ~max(worst_crime_2011$lat))
+  addWebGLHeatmap(size=100, group="Most Heinous Crimes of 2011")%>%
+  fitBounds(bounds[[1]],bounds[[2]],bounds[[3]],bounds[[4]])
 
 crime_map_2011
+
+
 
 
 
