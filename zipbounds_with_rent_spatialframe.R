@@ -7,18 +7,26 @@ library(foreign)
 setwd("~/Documents/HousingMap/R_data/")
 
 
-# rent index of Los Angeles County by zipcodes + formatting
+# rent index of Los Angeles County by zipcodes
 rent_index <- read.csv(file= 'ZRI_by_zipcode.csv', stringsAsFactors = FALSE)
 rent_index <- filter(rent_index, rent_index$County=="Los Angeles County")
+
+#choosing just zipcodes and average rent, formatting
 rent_positions <- c(2, 8)
 rent_index <- rent_index %>% dplyr::select(rent_positions)
 names(rent_index)[1] <- "zipcode"
 names(rent_index)[2] <- "rental_average"
 
+#reading zipcode bounded zones data
 zipbounds <- readOGR('ZIPCODES.geojson', stringsAsFactors = FALSE)
 
-#mutate zipbounds zipcode to integer for left_join
+#mutate zipbounds zipcode class to integer for left_join
 zipbounds@data[4] <- lapply(zipbounds@data[4], as.integer)
 
 #adding rental average to geojson file
 zipbounds@data <- left_join(zipbounds@data, rent_index)
+
+
+
+
+

@@ -1,5 +1,9 @@
-library(leaflet)
+#GOOGLE_CLOUD_API
+google_cloud_key <- Sys.getenv("GOOGLE_CLOUD_API")
+ggmap::register_google(google_cloud_key)
 
+#MAPBOX_API
+mapbox_key <- Sys.getenv("MAPBOX_API")
 
 pal <- colorNumeric("viridis", NULL)
 
@@ -10,6 +14,11 @@ leaflet(zipbounds) %>%
               label = ~paste0(zipcode, ": ", formatC(rental_average, big.mark = ","))) %>%
   addLegend(pal = pal, values = ~log10(rental_average), opacity = 0.5,
             labFormat = labelFormat(transform = function(x) round(10^x)))
+
+library(leaflet)
+
+
+
 
 
 

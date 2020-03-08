@@ -1,16 +1,6 @@
 #set working dir to heatmap
 setwd("~/Documents/HousingMap/desirableZ/")
 
-#accessing r environ
-R.home()
-
-ggmap::register_google(google_cloud_key)
-
-
-#GOOGLE_CLOUD_API
-#MAPBOX_API
-google_cloud_key <- Sys.getenv("GOOGLE_CLOUD_API")
-mapbox_key <- Sys.getenv("MAPBOX_API")
 
 #rent/zillow data
 setwd("~/Documents/HousingMap/R_data/")
@@ -24,7 +14,6 @@ library(sf)
 library(DescTools)
 library(geoformattr)
 
-mapbox_endpoint <- "https://api.mapbox.com"
 
 
 
@@ -41,29 +30,55 @@ crime_2018 <- sf::st_read('2018_crime.gpkg')
 crime_2019 <- sf::st_read('2019_crime.gpkg')
 
 
+decade_of_crime.list <- list(crime_2011, crime_2012, crime_2013, crime_2014, crime_2015,
+                     crime_2016, crime_2017, crime_2018, crime_2019)
+
 #split POINT into long/lat for heatmap considerations
-crime_2011 <- geom_to_lonlat(crime_2011)
-crime_2018 <- geoformattr::geom_to_lonlat(crime_2018)
-crime_2019 <- geoformattr::geom_to_lonlat(crime_2019)
+decade_of_crime.list <- lapply(decade_of_crime.list, geoformattr::geom_to_lonlat)
+
+#filtered for only bodily_crimes
+for (i in seq_along(decade_of_crime.list)) {
+  decade_of_crime.list[[i]] <- filter(decade_of_crime.list[[i]], grepl(paste(bodily_crime, collapse="|"), crm_cd_desc))
+}
+
+#rowbind all years together to one frame
+for (i in 2:length(decade_of_crime.list)) {
+  x <- rbind(x, decade_of_crime.list[[i]])
+}
 
 
-severe_crimes <- c("HOMICIDE", "AGGRAVATED", "SEXUAL", "FORCIBLE", "RAPE", "CHILD ABUSE", "BURGLARY", "FELONY", "HUMAN TRAFFICKING", "LYNCHING", "GRAND")
+#separate by property vs bodily
+bodily_crime <- c("HOMICIDE", 
+                   "AGGRAVATED", 
+                   "SEXUAL", 
+                   "FORCIBLE", 
+                   "RAPE", 
+                   "CHILD ABUSE", 
+                   "FELONY", 
+                   "HUMAN TRAFFICKING", 
+                   "LYNCHING"
+                   )
+
+property_crime <- c("BURGLARY",
+                   "THEFT",
+                   "GRAND",
+                   "ARSON",
+                   "STOLEN",
+                   'RECKLESS',
+                   'ROBBERY',
+                   'DISTURBING THE PEACE',
+                   'ILLEGAL DUMPING',
+                   'PROPERTY'
+                   )
+
 #require dplyr for filter
 worst_crime_2011 <- filter(crime_2011, grepl(paste(severe_crimes, collapse="|"), crm_cd_desc))
-worst_crime_2018 <- filter(crime_2018, grepl(paste(severe_crimes, collapse="|"), crm_cd_desc))
-worst_crime_2019 <- filter(crime_2019, grepl(paste(severe_crimes, collapse="|"), crm_cd_desc))
 
 rest_crimes_2011 <- data.frame(unique(crime_2011$crm_cd_desc[!crime_2011$crm_cd_desc %in% worst_crime_2011$crm_cd_desc]))
-rest_crimes_2018 <- data.frame(unique(crime_2018$crm_cd_desc[!crime_2018$crm_cd_desc %in% worst_crime_2018$crm_cd_desc]))
-rest_crimes_2019 <- data.frame(unique(crime_2019$crm_cd_desc[!crime_2019$crm_cd_desc %in% worst_crime_2019$crm_cd_desc]))
-
 
 
 #list of every unique crime code
 crime_codes <- data.frame(unique(crime_2019$crm_cd_desc))
-
-
-
 crime_codes_freq <- sort(table(crime_2019$crm_cd_desc), decreasing=T)
 
 
@@ -71,8 +86,9 @@ crime_codes_freq <- sort(table(crime_2019$crm_cd_desc), decreasing=T)
 
 
 
-
-crime_map_2011 <- leaflet(worst_crime_2011) %>%
+library(leaflet)
+library(leaflet.extras)
+crime_map_2011 <- leaflet(x) %>%
   addProviderTiles(providers$CartoDB.DarkMatter)%>%
   addWebGLHeatmap(size=100, group="Most Heinous Crimes of 2011")
 
