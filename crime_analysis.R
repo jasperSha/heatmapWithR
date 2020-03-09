@@ -1,9 +1,6 @@
-#set working dir to heatmap
-setwd("~/Documents/HousingMap/desirableZ/")
 
 
 #rent/zillow data
-setwd("~/Documents/HousingMap/R_data/")
 
 library(raster)
 library(dplyr)
@@ -19,6 +16,7 @@ library(geoformattr)
 
 library(sf)
 #GIS data dir
+setwd("~/Documents/HousingMap/R_data/crimes/")
 crime_2011 <- sf::st_read('2011_crime.gpkg')
 crime_2012 <- sf::st_read('2012_crime.gpkg')
 crime_2013 <- sf::st_read('2013_crime.gpkg')

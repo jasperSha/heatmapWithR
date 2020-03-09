@@ -11,22 +11,21 @@ setwd("~/Documents/HousingMap/R_data/zipcodes/")
 zip_boundaries_with_centroids.shape <- readOGR(dsn=getwd(), layer='geo_export_d764188d-09b1-4f1a-bae8-9a19721aa37d')
 
 
-
 # rent index of Los Angeles County by zipcodes + formatting
+setwd('~/Documents/HousingMap/R_data/rental/')
 rent_index <- read.csv(file= 'ZRI_by_zipcode.csv', stringsAsFactors = FALSE)
 rent_index <- filter(rent_index, rent_index$County=="Los Angeles County")
 
 #grabbing just zip code and rental average columns
 rent_positions <- c(2, 8)
-rent_index <- rent_index %>% select(rent_positions)
+rent_index <- rent_index %>% dplyr::select(rent_positions)
 names(rent_index)[1] <- "zipcode"
 names(rent_index)[2] <- "rental_average"
 
 
 #reading rental average by zipcode bounds
-setwd("~/Documents/HousingMap/R_data/")
+setwd("~/Documents/HousingMap/R_data/zipcodes/")
 zipbounds <- readOGR('ZIPCODES.geojson', stringsAsFactors = FALSE)
-
 
 #mutate zipbounds zipcode to integer for left_join
 zipbounds@data[4] <- lapply(zipbounds@data[4], as.integer)
