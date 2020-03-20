@@ -6,10 +6,6 @@ library(maptools)
 library(leaflet)
 library(foreign)
 
-#zipcode centroids, given rent index by zip codes, assign to layer
-setwd("~/Documents/HousingMap/R_data/zipcodes/")
-zip_boundaries_with_centroids.shape <- readOGR(dsn=getwd(), layer='geo_export_d764188d-09b1-4f1a-bae8-9a19721aa37d')
-
 
 # rent index of Los Angeles County by zipcodes + formatting
 setwd('~/Documents/HousingMap/R_data/rental/')
@@ -46,14 +42,9 @@ leaflet(zipbounds) %>%
   addTiles() %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.8, fillOpacity = .35,
               fillColor = ~pal(log10(rental_average)),
-              label = ~paste0(zipcode, ": ", formatC(rental_average, big.mark = ","))) %>%
+              label = ~paste0(~gsId, ": ", formatC(rental_average, big.mark = ","))) %>%
   addLegend(pal = pal, values = ~log10(rental_average), opacity = 0.5,
             labFormat = labelFormat(transform = function(x) round(10^x)))
-
-
-
-
-
 
 
 
@@ -70,6 +61,10 @@ positions <- c(3, 233:293)
 hood_zri <- hood_zri %>% select(positions)
 
 
+
+#zipcode centroids, given rent index by zip codes, assign to layer
+setwd("~/Documents/HousingMap/R_data/zipcodes/")
+zip_boundaries_with_centroids.shape <- readOGR(dsn=getwd(), layer='geo_export_d764188d-09b1-4f1a-bae8-9a19721aa37d')
 
 
 

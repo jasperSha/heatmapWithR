@@ -1,18 +1,11 @@
-
-
 #rent/zillow data
-
 library(raster)
 library(dplyr)
 library(ggmap)
 library(magrittr)
 library(leaflet)
-library(sf)
 library(DescTools)
 library(geoformattr)
-
-
-
 
 library(sf)
 #GIS data dir
@@ -27,23 +20,15 @@ crime_2017 <- sf::st_read('2017_crime.gpkg')
 crime_2018 <- sf::st_read('2018_crime.gpkg')
 crime_2019 <- sf::st_read('2019_crime.gpkg')
 
+#aggregate full decade of crimes
+crime_2011_to_2019 <- rbind(crime_2011, crime_2012, crime_2013, crime_2014, crime_2015, crime_2016,
+                            crime_2017, crime_2018, crime_2019)
+crime_2011_to_2019 <- geoformattr::geom_to_lonlat(crime_2011_to_2019)
+coordinates(crime_2011_to_2019) <- ~lon + lat
+proj4string(crime_2011_to_2019) <- CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')
 
-decade_of_crime.list <- list(crime_2011, crime_2012, crime_2013, crime_2014, crime_2015,
-                     crime_2016, crime_2017, crime_2018, crime_2019)
-
-#split POINT into long/lat for heatmap considerations
-decade_of_crime.list <- lapply(decade_of_crime.list, geoformattr::geom_to_lonlat)
-
-#filtered for only bodily_crimes
-for (i in seq_along(decade_of_crime.list)) {
-  decade_of_crime.list[[i]] <- filter(decade_of_crime.list[[i]], grepl(paste(bodily_crime, collapse="|"), crm_cd_desc))
-}
-
-#rowbind all years together to one frame
-for (i in 2:length(decade_of_crime.list)) {
-  x <- rbind(x, decade_of_crime.list[[i]])
-}
-
+#list of every unique crime code
+crime_codes <- data.frame(unique(crime_2011_to_2019@data$crm_cd_desc))
 
 #separate by property vs bodily
 bodily_crime <- c("HOMICIDE", 
@@ -54,7 +39,8 @@ bodily_crime <- c("HOMICIDE",
                    "CHILD ABUSE", 
                    "FELONY", 
                    "HUMAN TRAFFICKING", 
-                   "LYNCHING"
+                   "LYNCHING",
+                   "CHILD"
                    )
 
 property_crime <- c("BURGLARY",
@@ -66,18 +52,31 @@ property_crime <- c("BURGLARY",
                    'ROBBERY',
                    'DISTURBING THE PEACE',
                    'ILLEGAL DUMPING',
-                   'PROPERTY'
+                   'PROPERTY',
+                   "VANDALISM"
                    )
 
-#require dplyr for filter
-worst_crime_2011 <- filter(crime_2011, grepl(paste(severe_crimes, collapse="|"), crm_cd_desc))
+
+#filtered for only bodily_crimes
+for (i in seq_along(decade_of_crime.list)) {
+  decade_of_crime.list[[i]] <- filter(decade_of_crime.list[[i]], grepl(paste(bodily_crime, collapse="|"), crm_cd_desc))
+}
+
+#rowbind all years together to one frame
+for (i in 2:length(decade_of_crime.list)) {
+  x <- rbind(x, decade_of_crime.list[[i]])
+}
+library(spdplyr)
+
+#cannot apply filter directly to spatial points dataframe
+#solution: subset the data using subset(spdf, spdf@data$column=="choose value here to match")
+worst_crimes <- subset(crime_2011_to_2019, group)
+worst_crimes <- filter(crime_2011_to_2019@data, grepl(paste(bodily_crime, collapse="|"), crm_cd_desc))
 
 rest_crimes_2011 <- data.frame(unique(crime_2011$crm_cd_desc[!crime_2011$crm_cd_desc %in% worst_crime_2011$crm_cd_desc]))
 
+?spdplyr
 
-#list of every unique crime code
-crime_codes <- data.frame(unique(crime_2019$crm_cd_desc))
-crime_codes_freq <- sort(table(crime_2019$crm_cd_desc), decreasing=T)
 
 
 
