@@ -6,6 +6,7 @@ library(magrittr)
 library(leaflet)
 library(DescTools)
 library(geoformattr)
+library(ggplot2)
 
 library(sf)
 #GIS data dir
@@ -43,7 +44,7 @@ bodily_crime <- c("HOMICIDE",
                    "CHILD"
                    )
 
-property_crime <- c("BURGLARY",
+nonviolent_crime <- c("BURGLARY",
                    "THEFT",
                    "GRAND",
                    "ARSON",
@@ -56,44 +57,41 @@ property_crime <- c("BURGLARY",
                    "VANDALISM"
                    )
 
-
-#filtered for only bodily_crimes
-for (i in seq_along(decade_of_crime.list)) {
-  decade_of_crime.list[[i]] <- filter(decade_of_crime.list[[i]], grepl(paste(bodily_crime, collapse="|"), crm_cd_desc))
-}
-
-#rowbind all years together to one frame
-for (i in 2:length(decade_of_crime.list)) {
-  x <- rbind(x, decade_of_crime.list[[i]])
-}
-library(spdplyr)
+rm(crime_2011, crime_2012, crime_2013, crime_2014, crime_2015, crime_2016, crime_2017, crime_2018, crime_2019)
 
 #cannot apply filter directly to spatial points dataframe
 #solution: subset the data using subset(spdf, spdf@data$column=="choose value here to match")
-worst_crimes <- subset(crime_2011_to_2019, group)
-worst_crimes <- filter(crime_2011_to_2019@data, grepl(paste(bodily_crime, collapse="|"), crm_cd_desc))
-
-rest_crimes_2011 <- data.frame(unique(crime_2011$crm_cd_desc[!crime_2011$crm_cd_desc %in% worst_crime_2011$crm_cd_desc]))
-
-?spdplyr
+#x are the bodily crimes
+body_crimes <- crime_2011_to_2019[grep(paste(bodily_crime, collapse="|"), crime_2011_to_2019@data$crm_cd_desc), ]
+#y are the property crimes
+nonviolent_crimes <- crime_2011_to_2019[grep(paste(nonviolent_crime, collapse="|"), crime_2011_to_2019@data$crm_cd_desc), ]
 
 
+bbox_frame <- data.frame(longitude=coordinates(body_crimes)[,1], latitude=coordinates(body_crimes)[,2])
 
+max_lon <- max(bbox_frame[,1][bbox_frame[,1]<0])
+min_lon <- min(bbox_frame[,1])
+min_lat <- min(bbox_frame[,2][bbox_frame[,2]>0])
+max_lat <- max(bbox_frame[,2])
 
-
-
+bbox <- c(min_lon, min_lat, max_lon, max_lat)
 
 library(leaflet)
 library(leaflet.extras)
-crime_map_2011 <- leaflet(x) %>%
+crime_map <- leaflet(body_crimes) %>%
   addProviderTiles(providers$CartoDB.DarkMatter)%>%
   addWebGLHeatmap(size=100, group="Most Heinous Crimes of 2011")%>%
-  fitBounds(bounds[[1]],bounds[[2]],bounds[[3]],bounds[[4]])
+  fitBounds(bbox[[1]],bbox[[2]],bbox[[3]],bbox[[4]])
 
-crime_map_2011
+crime_map
 
 
 
+
+
+
+
+setwd("~/Documents/HousingMap/lasd_crime_stats/")
 
 
 
