@@ -4,3 +4,9 @@ City_Boundaries/
 zipcodes/
 .Rproj.user
 temp/
+
+.RData
+.Renviron
+.RHistory
+.Ruserdata
+.Rapp.history
