@@ -10,7 +10,7 @@ library(spatstat)
 
 #zillow data from postgresql database
 setwd('~/Documents/HousingMap/R_data/rental/')
-zillow <- sf::st_read('property.gpkg')
+zillow <- sf::st_read('property_distr.gpkg')
 zillow <- geoformattr::geom_to_lonlat(zillow)
 #convert to spatial points dataframe
 coordinates(zillow) <- ~lon + lat
@@ -50,7 +50,10 @@ str(zillow@data)
 
 #SCHOOL OPERATIONS HERE
 setwd('~/Documents/HousingMap/R_data/schools/')
-schools <- sf::st_read('school_package.gpkg')
+schools <- sf::st_read('schools_distr.gpkg')
+
+school_districts <- data.frame(unique(schools$DISTRICT))
+names(school_districts)[1] <- 'districts'
 
 schools <- geoformattr::geom_to_lonlat(schools)
 projcrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
@@ -59,26 +62,24 @@ projcrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 coordinates(schools) <- ~lon + lat
 
 
+#aggregates all my property information by zipcode, finds median of their school rating by zipcode
+school_dist <- aggregate(schools$gsRating, by=list(DISTRICT=schools$DISTRICT), FUN=median, na.rm=TRUE)
 
-#establishing extent for interpolation
-x_range <- as.numeric(c(-119, -117)) #min/max longitude
-y_range <- as.numeric(c(32, 35)) #min/max latitude
-
-#create empty grid using extent ranges
-#precision using 3 decimals for about 100 sq meters, about the size of a large field
-grid <- expand.grid(x = seq(from = x_range[1],
-                            to = x_range[2],
-                            by = 0.001),
-                    y = seq(from = y_range[1],
-                            to = y_range[2],
-                            by = 0.001))
-#convert grid to spatial points object
-coordinates(grid) <- ~x + y
-
-#set CRS
-proj4string(grid) <- CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')
-crs(schools) <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
+#merges and tidies up names/ratings
+zillow <- cbind(zillow, school_dist)
+names(school_dist)[2] <- 'District Rating'
+full_schools <- merge(schools, school_dist, by='DISTRICT')
+full_schools <- full_schools[c(2, 4, 3, 5, 1, 6, 7)]
 
 
-#turn into spatial pixels object
-gridded(grid) <- TRUE
+#convert to SpatialPointsDataFrame (this is for rgdal's writeOGR format only)
+full_schools_sp <- as(full_schools, 'Spatial')
+
+#for st_write, requires the geom column with c('lon', 'lat') format only (original full_schools format)
+st_write(full_schools, 'full_schools.gpkg', driver='gpkg')
+
+
+
+
+
+
